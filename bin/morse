@@ -32,11 +32,11 @@ def main
     end
 
     examples = failed_examples
-    if !examples.empty?
+    if examples.empty?
+      puts 'All tests passed'
+    else
       puts examples.join("\n")
       run_examples(examples) if do_run_examples
-    else
-      'All tests passed'
     end
   else
     puts 'No git branch detected'
@@ -88,6 +88,7 @@ def find_and_cache_branch
 end
 
 def failed_examples
+  examples = []
   branch_status = JSON.parse(open(semaphore_project_url(branch_id, :status)).read)
   unless branch_status['result'] == 'passed'
     log = JSON.parse(open(branch_status['build_log_url']).read)
@@ -95,12 +96,11 @@ def failed_examples
     log['threads'].each do |thread|
       failing_threads_commands += thread['commands'].select { |command| command['result'] != '0' }
     end
-    examples = []
     failing_threads_commands.each do |thread_commands|
       examples += thread_commands['output'].scan(/rspec ([^:]+:\d+)/).flatten
     end
-    examples
   end
+  examples
 end
 
 def run_examples(examples)
