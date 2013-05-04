@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 require 'open-uri'
 require 'json'
-require 'pry'
-require 'awesome_print'
 
 def main
   case
