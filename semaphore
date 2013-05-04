@@ -4,11 +4,6 @@ require 'json'
 require 'pry'
 require 'awesome_print'
 
-# TODO: Features
-# Caching
-# Additional Arguments
-#   Setup
-
 def main
   case
   when ARGV == ['--run']
@@ -19,14 +14,36 @@ def main
     raise "Invalid command line arguments"
   end
 
-  git_branch = git_current_branch
-  if !git_branch.empty?
-    examples = failed_examples(git_branch)
+  if api_token.empty?
+    puts 'No semaphore token found'
+    #initialise
+    exit
+  end
+
+  @git_branch = git_current_branch #check current git branch
+
+
+  if !@git_branch.empty?
+    if project_id.nil?
+      puts 'Unable to locate project on semaphore'
+      exit
+    end
+    if branch_id.nil?
+      puts 'Unable to locate branch on semaphore'
+      exit
+    end
+
+    examples = failed_examples
     puts examples.join("\n")
     run_examples(examples) if do_run_examples
   else
     puts 'No git branch detected'
   end
+
+end
+
+def git_current_project
+  `git remote -v`.lines.grep(/^origin\s/).first.scan(%r[github.com:([^/]+)/([^/]+)\.git]).first
 end
 
 def git_current_branch
@@ -38,15 +55,39 @@ def git_current_branch
   ).strip
 end
 
-def failed_examples(git_branch)
-  url = 'https://semaphoreapp.com/api/v1/projects/'
-  hash = get_hash
-  token = "?auth_token=#{get_token}"
+def semaphore_project_url(*args)
+  binding.pry
+  "https://semaphoreapp.com/api/v1/projects/#{project_id}/#{args.map(&:to_s).join('/')}?auth_token=#{api_token}"
+end
 
-  branch_information = JSON.parse(open(url + hash + '/branches' + token).read)
-  required_branch = branch_information.detect { |branch| branch['name'] == git_branch }
-  id = required_branch['id']
-  branch_status = JSON.parse(open(url + hash + '/' + id.to_s + '/status' + token).read)
+def branch_id
+  @branch_id||= begin
+    @file = File.join(Dir.pwd, '.git/.morse')
+    if File.exists?(@file)
+      begin
+        File.read(@file).lines.grep(/^#{@git_branch}:/).first[/^#{@git_branch}: (.+)/, 1]
+      rescue
+        find_and_cache_branch
+      end
+    else
+      find_and_cache_branch
+    end
+  end
+end
+
+def find_and_cache_branch
+  branch_information = JSON.parse(open(semaphore_project_url(:branches)).read)
+  branch_id = (branch_information.detect { |branch| branch['name'] == @git_branch })['id']
+  if !branch_id.to_s.empty?
+    File.open(@file, 'a') { |file| file.write("\n#{@git_branch}: #{branch_id}") }
+    branch_id
+  else
+    return nil
+  end
+end
+
+def failed_examples
+  branch_status = JSON.parse(open(semaphore_project_url(branch_id, :status)).read)
   unless branch_status['result'] == 'passed'
     log = JSON.parse(open(branch_status['build_log_url']).read)
     failing_threads_commands = []
@@ -67,12 +108,34 @@ def run_examples(examples)
   system("bundle exec rspec #{files.join(' ')}")
 end
 
-def get_token
-  'dyXxi99UrL2xKWiqesWX'
+def api_token # api_token
+  @api_token ||= File.read(File.expand_path('~/.semaphore.token'))
 end
 
-def get_hash
-  'be3135730461fae46ee1363f313379c79fed47a1'
+def project_id # project_id
+  @project_id ||= begin
+    @file = File.join(Dir.pwd, '.git/.morse')
+    if File.exists?(@file)
+      File.read(@file).lines.grep(/^project:/).first[/^project: (.+)/, 1]
+    else
+      find_and_cache_project
+    end
+  end
+end
+
+
+def find_and_cache_project
+  puts 'called: find_and_cache_project'
+  project_details = git_current_project
+  url = "https://semaphoreapp.com/api/v1/projects?auth_token=#{api_token}"
+  project_info = JSON.parse open(url).read
+  project_id = (project_info.detect { |pi| pi['name'] == project_details[1] && pi['owner'] == project_details[0] })['hash_id']
+  if !project_id.empty?
+    File.open(@file, 'a') { |file| file.write("project: #{project_id}") }
+    project_id
+  else
+    return nil
+  end
 end
 
 main
