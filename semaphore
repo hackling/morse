@@ -1,0 +1,78 @@
+#!/usr/bin/env ruby
+require 'open-uri'
+require 'json'
+require 'pry'
+require 'awesome_print'
+
+# TODO: Features
+# Caching
+# Additional Arguments
+#   Setup
+
+def main
+  case
+  when ARGV == ['--run']
+    do_run_examples = true
+  when ARGV.empty?
+    # no-op
+  else
+    raise "Invalid command line arguments"
+  end
+
+  git_branch = git_current_branch
+  if !git_branch.empty?
+    examples = failed_examples(git_branch)
+    puts examples.join("\n")
+    run_examples(examples) if do_run_examples
+  else
+    puts 'No git branch detected'
+  end
+end
+
+def git_current_branch
+  %x(
+    BRANCH="$(git symbolic-ref -q HEAD)"
+    BRANCH="${BRANCH##refs/heads/}"
+    BRANCH="${BRANCH:-HEAD}"
+    echo "$BRANCH"
+  ).strip
+end
+
+def failed_examples(git_branch)
+  url = 'https://semaphoreapp.com/api/v1/projects/'
+  hash = get_hash
+  token = "?auth_token=#{get_token}"
+
+  branch_information = JSON.parse(open(url + hash + '/branches' + token).read)
+  required_branch = branch_information.detect { |branch| branch['name'] == git_branch }
+  id = required_branch['id']
+  branch_status = JSON.parse(open(url + hash + '/' + id.to_s + '/status' + token).read)
+  unless branch_status['result'] == 'passed'
+    log = JSON.parse(open(branch_status['build_log_url']).read)
+    failing_threads_commands = []
+    log['threads'].each do |thread|
+      failing_threads_commands += thread['commands'].select { |command| command['result'] != '0' }
+    end
+    examples = []
+    failing_threads_commands.each do |thread_commands|
+      examples += thread_commands['output'].scan(/rspec ([^:]+:\d+)/).flatten
+    end
+    examples
+  end
+end
+
+def run_examples(examples)
+  files = examples.map { |example| example.sub(/:\d+$/, '') }.uniq
+  ap "bundle exec rspec #{files.join(' ')}"
+  system("bundle exec rspec #{files.join(' ')}")
+end
+
+def get_token
+  'dyXxi99UrL2xKWiqesWX'
+end
+
+def get_hash
+  'be3135730461fae46ee1363f313379c79fed47a1'
+end
+
+main
