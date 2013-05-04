@@ -32,8 +32,12 @@ def main
     end
 
     examples = failed_examples
-    puts examples.join("\n")
-    run_examples(examples) if do_run_examples
+    if !examples.empty?
+      puts examples.join("\n")
+      run_examples(examples) if do_run_examples
+    else
+      'All tests passed'
+    end
   else
     puts 'No git branch detected'
   end
