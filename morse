@@ -56,7 +56,6 @@ def git_current_branch
 end
 
 def semaphore_project_url(*args)
-  binding.pry
   "https://semaphoreapp.com/api/v1/projects/#{project_id}/#{args.map(&:to_s).join('/')}?auth_token=#{api_token}"
 end
 
