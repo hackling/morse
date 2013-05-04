@@ -126,7 +126,6 @@ end
 
 
 def find_and_cache_project
-  puts 'called: find_and_cache_project'
   project_details = git_current_project
   url = "https://semaphoreapp.com/api/v1/projects?auth_token=#{api_token}"
   project_info = JSON.parse open(url).read
