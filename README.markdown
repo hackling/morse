@@ -10,7 +10,7 @@ Place morse inside your `~/bin` directory
 Alternatively, you can manage this script with [fresh](http://github.com/freshshell):
 
 ```
-$ fresh https://github.com/hackling/morse/blob/master/morse
+$ fresh https://github.com/hackling/morse/blob/master/bin/morse
 ```
 
 ## Usage
