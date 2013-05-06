@@ -105,7 +105,7 @@ end
 
 def run_examples(examples)
   files = examples.map { |example| example.sub(/:\d+$/, '') }.uniq
-  ap "bundle exec rspec #{files.join(' ')}"
+  puts "bundle exec rspec #{files.join(' ')}"
   system("bundle exec rspec #{files.join(' ')}")
 end
 
