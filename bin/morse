@@ -11,7 +11,8 @@ def main
   when ARGV.empty?
     # no-op
   else
-    raise "Invalid command line arguments"
+    puts "Invalid command line arguments"
+    exit
   end
 
   if api_token.empty?
