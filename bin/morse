@@ -4,8 +4,10 @@ require 'json'
 
 def main
   case
-  when ARGV == ['--run']
+  when (ARGV.include? '--run')
     do_run_examples = true
+  when (ARGV.include? '--files')
+    no_line_numbers = true
   when ARGV.empty?
     # no-op
   else
@@ -35,7 +37,11 @@ def main
     if examples.empty?
       puts 'All tests passed'
     else
-      puts examples.join("\n")
+      if no_line_numbers
+        puts output_without_line_numbers(examples)
+      else
+        puts examples.join("\n")
+      end
       run_examples(examples) if do_run_examples
     end
   else
@@ -103,8 +109,12 @@ def failed_examples
   examples
 end
 
+def output_without_line_numbers(examples)
+  examples.map { |example| example.sub(/:\d+$/, '') }.uniq
+end
+
 def run_examples(examples)
-  files = examples.map { |example| example.sub(/:\d+$/, '') }.uniq
+  files = output_without_line_numbers(examples)
   puts "bundle exec rspec #{files.join(' ')}"
   system("bundle exec rspec #{files.join(' ')}")
 end
