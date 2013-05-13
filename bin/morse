@@ -37,6 +37,8 @@ def main
     examples = failed_examples
     if examples.empty?
       puts 'All tests passed'
+    elsif examples == 'pending'
+      puts 'Branch is currently building'
     else
       if no_line_numbers
         puts output_without_line_numbers(examples)
@@ -97,6 +99,9 @@ end
 def failed_examples
   examples = []
   branch_status = JSON.parse(open(semaphore_project_url(branch_id, :status)).read)
+  if branch_status['result'] == 'pending'
+    return 'pending'
+  end
   unless branch_status['result'] == 'passed'
     log = JSON.parse(open(branch_status['build_log_url']).read)
     failing_threads_commands = []
