@@ -3,17 +3,7 @@ require 'open-uri'
 require 'json'
 
 def main
-  case
-  when (ARGV.include? '--run')
-    do_run_examples = true
-  when (ARGV.include? '--files')
-    no_line_numbers = true
-  when ARGV.empty?
-    # no-op
-  else
-    puts "Invalid command line arguments"
-    exit
-  end
+  process_args(ARGV)
 
   if api_token.empty?
     puts 'No semaphore token found'
@@ -40,12 +30,12 @@ def main
     elsif examples == 'pending'
       puts 'Branch is currently building'
     else
-      if no_line_numbers
+      if @no_line_numbers
         puts output_without_line_numbers(examples)
       else
         puts examples.join("\n")
       end
-      run_examples(examples) if do_run_examples
+      run_examples(examples) if @do_run_examples
     end
   else
     puts 'No git branch detected'
@@ -152,6 +142,19 @@ def find_and_cache_project
   else
     return nil
   end
+end
+
+def process_args(argv)
+  @do_run_examples = argv.include? '--run'
+  @no_line_numbers = argv.include? '--files'
+
+  argv.each do |arg|
+    output_warning("unrecognised argument '#{arg}'") unless %w(--run --files).include? arg
+  end
+end
+
+def output_warning(message)
+  $stderr.puts "\e[33mWarning:\e[0m #{message}" if message.respond_to? :to_s
 end
 
 main
