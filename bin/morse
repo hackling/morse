@@ -151,9 +151,14 @@ def process_args(argv)
   argv.each do |arg|
     output_warning("unrecognised argument '#{arg}'") unless %w(--run --files).include? arg
   end
+
+  if @exit_program
+    exit
+  end
 end
 
 def output_warning(message)
+  @exit_program = true
   $stderr.puts "\e[33mWarning:\e[0m #{message}" if message.respond_to? :to_s
 end
 
