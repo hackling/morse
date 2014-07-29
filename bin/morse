@@ -87,7 +87,7 @@ end
 
 def find_and_cache_branch
   branch_information = JSON.parse(open(semaphore_project_url(:branches)).read)
-  branch_id = (branch_information.detect { |branch| branch['name'] == @git_branch })['id']
+  branch_id = (branch_information.detect(-> { {} }) { |branch| branch['name'] == @git_branch })['id']
   if !branch_id.to_s.empty?
     File.open(@file, 'a') { |file| file.write("\n#{@git_branch}: #{branch_id}") }
     branch_id
