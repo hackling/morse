@@ -168,10 +168,6 @@ def arg_present?(arg)
   !(Array(VALID_ARGS[arg.to_sym]) & ARGV).empty? if arg.respond_to? :to_sym
 end
 
-def output_warning(message)
-  $stderr.puts "\e[33mWarning:\e[0m #{message}" if message.respond_to? :to_s
-end
-
 def output_error(message)
   $stderr.puts "\e[31mError:\e[0m #{message}" if message.respond_to? :to_s
 end
