@@ -97,7 +97,7 @@ def failed_examples
       failing_threads_commands += thread['commands'].select { |command| command['result'] != '0' }
     end
     failing_threads_commands.each do |thread_commands|
-      examples += thread_commands['output'].scan(/rspec ([^:]+[:\d+]+\]?)/).flatten
+      examples += thread_commands['output'].scan(/rspec (.*?)<\/span/).flatten
     end
   end
   examples
