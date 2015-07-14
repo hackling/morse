@@ -13,7 +13,6 @@ def main
 
   @git_branch = git_current_branch #check current git branch
 
-
   if !@git_branch.empty?
     if project_id.nil?
       puts 'Unable to locate project on semaphore'
@@ -41,7 +40,6 @@ def main
   else
     puts 'No git branch detected'
   end
-
 end
 
 def git_current_project
@@ -130,7 +128,6 @@ def project_id # project_id
     end
   end
 end
-
 
 def find_and_cache_project
   project_details = git_current_project
