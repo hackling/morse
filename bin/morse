@@ -34,7 +34,6 @@ def main
       else
         puts examples.join("\n")
       end
-      puts examples
       run_examples(examples) if @do_run_examples
     end
   else
