@@ -108,7 +108,11 @@ def output_without_line_numbers(examples)
 end
 
 def run_examples(examples)
-  files = output_without_line_numbers(examples)
+  files = if @no_line_numbers
+    output_without_line_numbers(examples)
+  else
+    examples
+  end
   puts "bundle exec rspec #{files.join(' ')}"
   system("bundle exec rspec #{files.join(' ')}")
 end
