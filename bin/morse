@@ -35,6 +35,7 @@ def main
       else
         puts examples.join("\n")
       end
+      puts examples
       run_examples(examples) if @do_run_examples
     end
   else
@@ -106,7 +107,7 @@ def failed_examples
 end
 
 def output_without_line_numbers(examples)
-  examples.map { |example| example.sub(/:\d+$/, '') }.uniq
+  examples.map { |example| example[/^(.*?\.rb)/, 1] }.uniq
 end
 
 def run_examples(examples)
