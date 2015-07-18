@@ -2,42 +2,45 @@
 require 'open-uri'
 require 'json'
 
+VALID_ARGS = { run_examples: '--run', file_output: '--files' }
+
 def main
-  process_args(ARGV)
+  ARGV.freeze
+  validate_args
 
   if api_token.empty?
-    puts 'No semaphore token found'
-    #initialise
-    exit
+    output_error 'no semaphore token found'
+    exit_with_failure
   end
 
   @git_branch = git_current_branch #check current git branch
 
   if !@git_branch.empty?
     if project_id.nil?
-      puts 'Unable to locate project on semaphore'
-      exit
+      output_error 'unable to locate project on semaphore'
+      exit_with_failure
     end
     if branch_id.nil?
-      puts 'Unable to locate branch on semaphore'
-      exit
+      output_error 'unable to locate branch on semaphore'
+      exit_with_failure
     end
 
     examples = failed_examples
     if examples.empty?
-      puts 'All tests passed'
+      $stdout.puts 'All Rspec tests passed'
     elsif examples == 'pending'
-      puts 'Branch is currently building'
+      $stdout.puts 'Branch is currently building'
     else
-      if @no_line_numbers
+      if file_output?
         puts output_without_line_numbers(examples)
       else
         puts examples.join("\n")
       end
-      run_examples(examples) if @do_run_examples
+      run_examples(examples) if run_examples?
     end
   else
-    puts 'No git branch detected'
+    output_error 'no git branch detected'
+    exit_with_failure
   end
 end
 
@@ -145,22 +148,34 @@ def find_and_cache_project
   end
 end
 
-def process_args(argv)
-  @do_run_examples = argv.include? '--run'
-  @no_line_numbers = argv.include? '--files'
-
-  argv.each do |arg|
-    unless %w(--run --files).include? arg
-      @exit_program = true
-      output_warning("unrecognised argument '#{arg}'")
-    end
+def validate_args
+  fail ArgumentError unless (ARGV - VALID_ARGS.values).empty?
+rescue ArgumentError
+  ARGV.each do |arg|
+    output_error("invalid argument '#{arg}'") unless VALID_ARGS.values.include? arg
   end
 
-  exit if @exit_program
+  exit_with_failure
 end
 
-def output_warning(message)
-  $stderr.puts "\e[33mWarning:\e[0m #{message}" if message.respond_to? :to_s
+def run_examples?
+  arg_present? :run_examples
+end
+
+def file_output?
+  arg_present? :file_output
+end
+
+def arg_present?(arg)
+  !(Array(VALID_ARGS[arg.to_sym]) & ARGV).empty? if arg.respond_to? :to_sym
+end
+
+def output_error(message)
+  $stderr.puts "\e[31mError:\e[0m #{message}" if message.respond_to? :to_s
+end
+
+def exit_with_failure
+  exit false
 end
 
 main
