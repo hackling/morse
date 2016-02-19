@@ -55,7 +55,7 @@ def git_current_branch
 end
 
 def semaphore_project_url(*args)
-  "https://semaphoreapp.com/api/v1/projects/#{project_id}/#{args.map(&:to_s).join('/')}?auth_token=#{api_token}"
+  "https://semaphoreci.com/api/v1/projects/#{project_id}/#{args.map(&:to_s).join('/')}?auth_token=#{api_token}"
 end
 
 def branch_id
@@ -134,7 +134,7 @@ end
 
 def find_and_cache_project
   project_details = git_current_project
-  url = "https://semaphoreapp.com/api/v1/projects?auth_token=#{api_token}"
+  url = "https://semaphoreci.com/api/v1/projects?auth_token=#{api_token}"
   project_info = JSON.parse open(url).read
   project_id = (project_info.detect { |pi| pi['name'] == project_details[1] && pi['owner'] == project_details[0] })['hash_id']
   if !project_id.empty?
